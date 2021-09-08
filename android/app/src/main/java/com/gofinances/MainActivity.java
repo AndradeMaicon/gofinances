@@ -23,6 +23,11 @@ public class MainActivity extends ReactActivity {
     SplashScreen.show(this, SplashScreenImageResizeMode.CONTAIN, ReactRootView.class, false);
   }
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(null);
+    }
+
 
     /**
      * Returns the name of the main component registered from JavaScript.
