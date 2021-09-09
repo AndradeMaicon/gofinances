@@ -29,7 +29,7 @@ export function AppRoute() {
       }}
     >
       <Screen
-        name= 'Listagem'
+        name='Listagem'
         component={Dashboard}
         options={{
           tabBarIcon: (({size, color}) => (
@@ -44,7 +44,7 @@ export function AppRoute() {
       />
 
       <Screen 
-        name= 'Cadastrar'
+        name='Cadastrar'
         component={Register}
         options={{
           tabBarIcon: (({size, color}) => (
@@ -59,7 +59,7 @@ export function AppRoute() {
       />
 
       <Screen 
-        name= 'Resumo' 
+        name='Resumo' 
         component={Register}
         options={{
           tabBarIcon: (({size, color}) => (

@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, Keyboard, Modal, TouchableWithoutFeedback } from 'react-native';
-import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import uuid from 'react-native-uuid';
+
+import { useForm } from 'react-hook-form';
+import { useNavigation } from '@react-navigation/native';
 
 import { Button } from '../../components/Forms/Button';
 import { CategorySelectButton } from '../../components/Forms/CategorySelectButton';
 import { TransactionTypeButton } from '../../components/Forms/TransactionTypeButton';
 import { InputForm } from '../../components/Forms/InputForm';
-
 import { CategorySelect } from '../CategorySelect';
+import { storageKeyDTO } from '../../dtos/storageKeyDTO';
 
 import {
   Container,
@@ -43,9 +46,14 @@ export function Register() {
     name: 'Category',
   });
 
-  const dataKey = '@gofinances:transactions';
+  const navigation = useNavigation();
 
-  const { control, handleSubmit, formState: { errors } } = useForm({
+  const { 
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors }
+  } = useForm({
     resolver: yupResolver(schema)
   });
 
@@ -71,14 +79,16 @@ export function Register() {
     }
 
     const newTransaction = {
+      id: String(uuid.v4()),
       name: form.name,
       amount: form.amount,
-      transactionType,
-      category: category.key
+      type: transactionType,
+      category: category.key,
+      date: new Date()
     }
 
     try {
-      const data = await AsyncStorage.getItem(dataKey);
+      const data = await AsyncStorage.getItem(storageKeyDTO);
       const currentData = data ? JSON.parse(data) : [];
 
       const dataFormatted = [
@@ -86,28 +96,22 @@ export function Register() {
         newTransaction
       ]
 
-      await AsyncStorage.setItem(dataKey, JSON.stringify(dataFormatted))
+      await AsyncStorage.setItem(storageKeyDTO, JSON.stringify(dataFormatted))
+
+      reset();
+      setTransactionType('');
+      setCategory({
+        key: 'category',
+        name: 'Category',
+      });
       
+      navigation.navigate('Listagem');
+
     } catch (error) {
       console.log(error);
       Alert.alert('Não foi possivel savar');
     }
   }
-
-  useEffect(() => {
-    async function loadData(){
-      const data = await AsyncStorage.getItem(dataKey);
-      console.log(JSON.parse(data!))
-    }
-
-    loadData()
-
-    // async function purge(){
-    //   const data = await AsyncStorage.removeItem(dataKey);
-    // }
-
-    // purge()
-  }, [])
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
