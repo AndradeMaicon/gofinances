@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator } from 'react-native';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from 'styled-components';
+import { useAuth } from '../../hooks/auth';
 
 import { HighlightCard } from '../../components/HighlightCard';
 import { TransactionCard, TransactionCardProps } from '../../components/TransactionCard';
-import { storageKeyDTO } from '../../dtos/storageKeyDTO';
 
 import { 
   Container,
@@ -48,23 +50,30 @@ export function Dashboard() {
   const [highlightData, setHighlightData] = useState<HighlightData>({} as HighlightData);
 
   const theme = useTheme();
+  const { signOut, user } = useAuth()
 
   function getLastTransactionDate(collection: DataListProps[], type: 'down' | 'up') {
-    const lastTransaction = Intl.DateTimeFormat('pt-BR', {
+    const filter = collection.filter(transaction => transaction.type === type)
+
+    if(filter.length === 0){
+      return 0;
+    }
+
+    const map = filter.map(transaction => new Date(transaction.date).getTime())
+    const max = Math.max.apply(Math, map)
+    const date = new Date(max)
+
+    const lastTransactionFormatted = Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: 'long',
-    }).format(new Date(
-      Math.max.apply(Math, collection
-        .filter(transaction => transaction.type === type)
-        .map(transaction => new Date(transaction.date).getTime())
-      )
-    ))
+    }).format(new Date(date))
 
-    return lastTransaction;
+    return lastTransactionFormatted;
   }
 
   async function loadTransaction() {
-    const resp = await AsyncStorage.getItem(storageKeyDTO);
+    const dataKey = `@gofinances:transactions_user:${user.id}`
+    const resp = await AsyncStorage.getItem(dataKey);
     const transactions = resp ? JSON.parse(resp) : [];
 
     let entriesTotal = 0;
@@ -112,32 +121,43 @@ export function Dashboard() {
 
       const total = entriesTotal - expensiveTotal;
 
+      const currentDate = total >= 0 ? `01 à ${totalInterval}` : `Não houveram entradas`
+
+
       setHighlightData({
         entries: {
           amount: entriesTotal.toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL'
           }),
-          lastTransaction: `Última entrada dia ${lastTransactionEntries}`
+          lastTransaction: lastTransactionEntries !== 0 
+            ? `Última entrada dia ${lastTransactionEntries}`
+            : 'Nenhuma transação encontrada'
         },
         expensives: {
           amount: expensiveTotal.toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL'
           }),
-          lastTransaction: `Última saída dia ${lastTransactionExpensives}`
+          lastTransaction: lastTransactionExpensives !== 0
+            ? `Última saída dia ${lastTransactionExpensives}`
+            : 'Nenhuma transação encontrada'
         },
         total: {
           amount: total.toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL'
           }),
-          lastTransaction: `01 à ${totalInterval}`
+          lastTransaction: currentDate
         }
       })
     
       setIsLoading(false)
-    }
+  }
+
+  function handleSignOut() {
+    signOut()
+  }
 
   useEffect(() => {
     loadTransaction()
@@ -164,14 +184,14 @@ export function Dashboard() {
               <Header>
                 <UserWrapper>
                   <UserInfo>
-                    <Photo source={{ uri: 'https://avatars.githubusercontent.com/u/19509115?v=4'}}/>
+                    <Photo source={{ uri: user.photo }}/>
                     <User>
                       <UserGreeting>Olá,</UserGreeting>
-                      <UserName>Maicon</UserName>
+                      <UserName>{user.name}</UserName>
                     </User>
                   </UserInfo>
 
-                  <LogoutButton onPress={() => {}}>
+                  <LogoutButton onPress={handleSignOut}>
                     <Icon name='power'/>
                   </LogoutButton>
                 </UserWrapper>

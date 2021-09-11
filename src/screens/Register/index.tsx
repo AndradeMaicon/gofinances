@@ -7,13 +7,13 @@ import uuid from 'react-native-uuid';
 
 import { useForm } from 'react-hook-form';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../../hooks/auth';
 
 import { Button } from '../../components/Forms/Button';
 import { CategorySelectButton } from '../../components/Forms/CategorySelectButton';
 import { TransactionTypeButton } from '../../components/Forms/TransactionTypeButton';
 import { InputForm } from '../../components/Forms/InputForm';
 import { CategorySelect } from '../CategorySelect';
-import { storageKeyDTO } from '../../dtos/storageKeyDTO';
 
 import {
   Container,
@@ -47,6 +47,8 @@ export function Register() {
   });
 
   const navigation = useNavigation();
+
+  const { user } = useAuth();
 
   const { 
     control,
@@ -88,7 +90,8 @@ export function Register() {
     }
 
     try {
-      const data = await AsyncStorage.getItem(storageKeyDTO);
+      const dataKey = `@gofinances:transactions_user:${user.id}`
+      const data = await AsyncStorage.getItem(dataKey);
       const currentData = data ? JSON.parse(data) : [];
 
       const dataFormatted = [
@@ -96,7 +99,7 @@ export function Register() {
         newTransaction
       ]
 
-      await AsyncStorage.setItem(storageKeyDTO, JSON.stringify(dataFormatted))
+      await AsyncStorage.setItem(dataKey, JSON.stringify(dataFormatted))
 
       reset();
       setTransactionType('');

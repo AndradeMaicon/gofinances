@@ -1,1 +1,2 @@
-export const storageKeyDTO = '@gofinances:transactions';
+export const storageKeyTransactionsDTO = '@gofinances:transactions';
+export const storageKeyUserDTO = '@gofinances:user';
